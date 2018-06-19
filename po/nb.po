@@ -7,7 +7,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Superdesk\n"
-"PO-Revision-Date: 2018-06-19 08:48+0000\n"
+"PO-Revision-Date: 2018-06-19 13:51+0000\n"
 "Last-Translator: Helen Vogt <helen.vogt@ntb.no>\n"
 "Language-Team: Norwegian Bokmål (http://www.transifex.com/sourcefabric/superdesk/language/nb/)\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -1931,7 +1931,7 @@ msgstr "Lag pakke"
 
 #: ../superdesk-planning/client/constants/events.js:45
 msgid "Create Planning Item"
-msgstr "Lag planelement"
+msgstr "Opprett planelement"
 
 #: scripts/apps/monitoring/index.js:71
 msgid "Create a broadcast"
@@ -1986,7 +1986,7 @@ msgstr "Opprett nye elementer eller bytt søkefiltre"
 
 #: ../superdesk-planning/client/components/Main/CreateNewSubnavDropdown.jsx:36
 msgid "Create new planning item"
-msgstr "Lag nytt planelement"
+msgstr "Opprett nytt planelement"
 
 #: scripts/apps/packaging/index.js:46 scripts/apps/packaging/index.js:55
 msgid "Create package"
@@ -2316,7 +2316,7 @@ msgstr "Publisert"
 #: scripts/apps/monitoring/views/aggregate-settings.html:118
 #: scripts/apps/monitoring/views/aggregate-settings.html:94
 msgid "Desk Scheduled Output"
-msgstr "HOLD"
+msgstr "Planlagt publisert"
 
 #: scripts/apps/templates/views/sd-template-select.html:17
 msgid "Desk Templates"
@@ -2590,7 +2590,7 @@ msgstr "Leveres:"
 #: scripts/apps/archive/index.js:165 scripts/apps/archive/index.js:189
 #: scripts/apps/authoring/authoring/constants.js:10
 msgid "Duplicate"
-msgstr "Duplisèr"
+msgstr "Dupliser"
 
 #: ../superdesk-planning/client/components/Coverages/CoverageEditor/index.jsx:61
 msgid "Duplicate As"
@@ -3160,7 +3160,7 @@ msgstr "Hendelse"
 #: ../superdesk-planning/client/components/Events/EventHistory.jsx:63
 #: ../superdesk-planning/client/components/Planning/PlanningHistory.jsx:63
 msgid "Event Cancelled"
-msgstr "Hendelse kansellert"
+msgstr "Hendelse avlyst"
 
 #: ../superdesk-planning/client/components/Main/ItemEditor/Editor.jsx:128
 #: ../superdesk-planning/client/components/Main/ItemPreview/PreviewPanel.jsx:67
@@ -3330,11 +3330,11 @@ msgstr "Kunne ikke oppdatere"
 
 #: ../superdesk-planning/client/actions/planning/ui.js:258
 msgid "Failed to cancel all coverage!"
-msgstr "Kunne ikke slette all dekning"
+msgstr "Kunne ikke avlyse all dekning"
 
 #: ../superdesk-planning/client/actions/events/ui.js:131
 msgid "Failed to cancel the Event!"
-msgstr "Kunne ikke slette hendelsen"
+msgstr "Kunne ikke avlyse hendelsen"
 
 #: ../superdesk-planning/client/actions/planning/ui.js:240
 msgid "Failed to cancel the Planning Item!"
@@ -4784,7 +4784,7 @@ msgstr "Minimum høyde og bredde er 200"
 #: ../superdesk-planning/client/components/UI/Form/TimeInput/TimeInputPopup.jsx:115
 #: scripts/core/ui/views/sd-timepicker-popup.html:21
 msgid "Minutes"
-msgstr "Min."
+msgstr "Minutter"
 
 #: scripts/apps/authoring/views/authoring-header.html:39
 msgid "Missing Link"
@@ -5475,7 +5475,7 @@ msgstr "Publisert"
 
 #: scripts/apps/monitoring/views/aggregate-settings.html:29
 msgid "Output/Scheduled"
-msgstr "HOLD"
+msgstr "Planlagt publisert"
 
 #: scripts/apps/users/views/edit.html:17
 msgid "Overview"
@@ -6905,7 +6905,7 @@ msgstr "Stadium"
 #: ../superdesk-planning/client/utils/index.js:420
 #: scripts/apps/search/views/search-filters.html:190
 msgid "Scheduled"
-msgstr "HOLD"
+msgstr "Planlagt"
 
 #: scripts/apps/publish/views/publish-queue.html:100
 msgid "Scheduled at"
@@ -9166,7 +9166,7 @@ msgstr "[ingen]"
 
 #: ../superdesk-planning/client/components/Agendas/ManageAgendasModal.jsx:83
 msgid "active"
-msgstr "aktiv"
+msgstr "aktiv(e)"
 
 #: scripts/core/editor2/views/add-content.html:14
 msgid "add a picture"
@@ -9404,7 +9404,7 @@ msgstr "desk:"
 #: scripts/apps/users/views/edit-form.html:14
 #: scripts/apps/users/views/user-list-item.html:17
 msgid "disabled"
-msgstr "deaktivert"
+msgstr "deaktiverte"
 
 #: scripts/core/lang/missing-translations-strings.js:31
 msgid "disabled user {{user}}"
@@ -9616,7 +9616,7 @@ msgstr "tittel"
 
 #: scripts/apps/highlights/views/highlights_config_modal.html:44
 msgid "hours"
-msgstr "t."
+msgstr "timer"
 
 #: scripts/apps/desks/views/content-expiry.html:4
 #: scripts/apps/desks/views/content-expiry.html:40
@@ -9674,7 +9674,7 @@ msgstr "under_arbeid"
 #: scripts/apps/users/views/edit-form.html:15
 #: scripts/apps/users/views/user-list-item.html:18
 msgid "inactive"
-msgstr "inaktive"
+msgstr "inaktiv(e)"
 
 #: scripts/core/lang/missing-translations-strings.js:6
 msgid "ingested"
@@ -10022,7 +10022,7 @@ msgstr "planlagt"
 
 #: scripts/core/lang/missing-translations-strings.js:21
 msgid "scheduled Desk Output"
-msgstr "HOLD"
+msgstr "Planlagt publisert"
 
 #: scripts/core/lang/missing-translations-strings.js:20
 msgid "search"
