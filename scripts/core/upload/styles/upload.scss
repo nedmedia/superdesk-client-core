@@ -420,7 +420,7 @@ media uploader
         }
 
         .upload-thumbs {
-            li {
+            .flex-grid__item {
                 min-height: 350px;
                 background: #fff;
                 .thumb {
@@ -518,7 +518,7 @@ media uploader
                         padding: 2px;
                     }
 
-                    .row {
+                    .form__row {
                         line-height: 18px;
                         position: relative;
                         padding: 3px 6px;

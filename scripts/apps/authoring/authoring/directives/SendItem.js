@@ -1,13 +1,16 @@
 import _ from 'lodash';
+import React from 'react';
+import {PreviewModal} from '../previewModal';
+
 
 SendItem.$inject = ['$q', 'api', 'desks', 'notify', 'authoringWorkspace',
     'superdeskFlags', '$location', 'macros', '$rootScope', 'deployConfig',
     'authoring', 'send', 'editorResolver', 'confirm', 'archiveService',
-    'preferencesService', 'multi', 'datetimeHelper', 'config', 'privileges', 'storage', 'modal'];
+    'preferencesService', 'multi', 'datetimeHelper', 'config', 'privileges', 'storage', 'modal', 'gettext', 'urls'];
 export function SendItem($q, api, desks, notify, authoringWorkspace,
     superdeskFlags, $location, macros, $rootScope, deployConfig,
     authoring, send, editorResolver, confirm, archiveService,
-    preferencesService, multi, datetimeHelper, config, privileges, storage, modal) {
+    preferencesService, multi, datetimeHelper, config, privileges, storage, modal, gettext, urls) {
     return {
         scope: {
             item: '=',
@@ -43,6 +46,7 @@ export function SendItem($q, api, desks, notify, authoringWorkspace,
             scope.beforeSend = scope._beforeSend || $q.when;
             scope.destination_last = {send_to: null, publish: null, duplicate_to: null};
             scope.origItem = angular.extend({}, scope.item);
+            scope.subscribersWithPreviewConfigured = [];
 
             // key for the storing last desk/stage in the user preferences for send action.
             var PREFERENCE_KEY = 'destination:active';
@@ -71,6 +75,7 @@ export function SendItem($q, api, desks, notify, authoringWorkspace,
                     scope.item = scope.isActive ? {} : null;
                     scope.multiItems = multi.count ? multi.getItems() : null;
                     scope.config = config;
+                    scope.isPackage = config != null && config.isPackage;
                     activate();
                 }
             }
@@ -81,11 +86,32 @@ export function SendItem($q, api, desks, notify, authoringWorkspace,
                 }
 
                 scope.isActive = !!item;
+
+                if (scope.config == null) {
+                    scope.isPackage = item != null && item.type === 'composite';
+                }
                 activate();
             }
 
             function activate() {
                 if (scope.isActive) {
+                    api.query('subscribers')
+                        .then((res) => {
+                            const allSubscribers = res['_items'];
+
+                            scope.subscribersWithPreviewConfigured = allSubscribers
+                                .map(
+                                    (subscriber) => {
+                                        subscriber.destinations = subscriber.destinations.filter(
+                                            (destination) => typeof destination.preview_endpoint_url === 'string'
+                                                && destination.preview_endpoint_url.length > 0
+                                        );
+
+                                        return subscriber;
+                                    }
+                                )
+                                .filter((subscriber) => subscriber.destinations.length > 0);
+                        });
                     desks
                         .initialize()
                         .then(fetchDesks)
@@ -93,6 +119,30 @@ export function SendItem($q, api, desks, notify, authoringWorkspace,
                         .then(setDesksAndStages);
                 }
             }
+
+            scope.preview = function() {
+                if (scope.$parent.save_enabled() === true) {
+                    modal.alert({
+                        headerText: gettext('Preview'),
+                        bodyText: gettext(
+                            'In order to preview the item, save the changes first.'
+                        ),
+                    });
+                } else {
+                    modal.createCustomModal()
+                        .then(({openModal, closeModal}) => {
+                            openModal(
+                                <PreviewModal
+                                    subscribersWithPreviewConfigured={scope.subscribersWithPreviewConfigured}
+                                    documentId={scope.item._id}
+                                    urls={urls}
+                                    closeModal={closeModal}
+                                    gettext={gettext}
+                                />
+                            );
+                        });
+                }
+            };
 
             scope.close = function() {
                 if (scope.mode === 'monitoring') {
@@ -131,9 +181,9 @@ export function SendItem($q, api, desks, notify, authoringWorkspace,
                 }
             };
 
-            scope.send = function(open) {
+            scope.send = function(open, sendAllPackageItems) {
                 updateLastDestination();
-                return runSend(open);
+                return runSend(open, sendAllPackageItems);
             };
 
             scope.$on('item:nextStage', (_e, data) => {
@@ -165,7 +215,10 @@ export function SendItem($q, api, desks, notify, authoringWorkspace,
              * any item opened for authoring (utilising, 'broadcast:preview' with {item: null})
              */
             function shouldClosePanel(event, data) {
-                if (scope.config && _.includes(scope.config.itemIds, data.item) || _.isNil(data.item)) {
+                if (
+                    (scope.config != null && data != null && _.includes(scope.config.itemIds, data.item))
+                    || (data == null || data.item == null)
+                ) {
                     scope.close();
                 }
             }
@@ -275,16 +328,17 @@ export function SendItem($q, api, desks, notify, authoringWorkspace,
             /**
              * Send the content to different desk/stage
              * @param {Boolean} open - True to open the item.
+             * @param {Boolean} sendAllPackageItems - True to include all contained items for packages
              * @return {Object} promise
              */
-            function runSend(open) {
+            function runSend(open, sendAllPackageItems) {
                 scope.loading = true;
                 scope.item.sendTo = true;
                 var deskId = scope.selectedDesk._id;
                 var stageId = scope.selectedStage._id || scope.selectedDesk.incoming_stage;
 
                 if (scope.mode === 'authoring') {
-                    return sendAuthoring(deskId, stageId, scope.selectedMacro);
+                    return sendAuthoring(deskId, stageId, scope.selectedMacro, sendAllPackageItems);
                 } else if (scope.mode === 'archive') {
                     return sendContent(deskId, stageId, scope.selectedMacro, open);
                 } else if (scope.config) {
@@ -297,6 +351,7 @@ export function SendItem($q, api, desks, notify, authoringWorkspace,
                         stage: stageId,
                         macro: scope.selectedMacro ? scope.selectedMacro.name : null,
                         open: open,
+                        sendAllPackageItems: sendAllPackageItems,
                     });
                 } else if (scope.mode === 'ingest') {
                     return sendIngest(deskId, stageId, scope.selectedMacro, open);
@@ -359,7 +414,8 @@ export function SendItem($q, api, desks, notify, authoringWorkspace,
                     itemType = typesList.length === 1 ? typesList[0] : null;
                 }
 
-                return scope.mode === 'authoring' || itemType === 'archive' || scope.mode === 'spike';
+                return scope.mode === 'authoring' || itemType === 'archive' || scope.mode === 'spike' ||
+                    (scope.mode === 'monitoring' && _.get(scope, 'config.action') === scope.vm.userActions.send_to);
             };
 
             /**
@@ -386,6 +442,8 @@ export function SendItem($q, api, desks, notify, authoringWorkspace,
                 } else if (scope._action === 'kill') {
                     return privileges.privileges.publish && scope.itemActions.kill;
                 }
+
+                return false;
             };
 
             /**
@@ -433,7 +491,7 @@ export function SendItem($q, api, desks, notify, authoringWorkspace,
                                 return $q.reject();
                             }
 
-                            return sendAuthoring(deskId, stageId, scope.selectedMacro, true)
+                            return sendAuthoring(deskId, stageId, scope.selectedMacro, false)
                                 .then((item) => {
                                     scope.loading = true;
                                     // open the item for locking and publish
@@ -487,9 +545,10 @@ export function SendItem($q, api, desks, notify, authoringWorkspace,
              * @param {String} deskId - selected desk Id
              * @param {String} stageId - selected stage Id
              * @param {String} macro - macro to apply
+             * @param {Boolean} sendAllPackageItems - True to include all contained items for packages
              * @return {Object} promise
              */
-            function sendAuthoring(deskId, stageId, macro) {
+            function sendAuthoring(deskId, stageId, macro, sendAllPackageItems) {
                 var msg;
 
                 scope.loading = true;
@@ -505,7 +564,12 @@ export function SendItem($q, api, desks, notify, authoringWorkspace,
                             if (result && result._etag) {
                                 scope.task._etag = result._etag;
                             }
-                            return api.save('move', {}, {task: {desk: deskId, stage: stageId}}, scope.item);
+
+                            return api.save('move', {},
+                                {
+                                    task: {desk: deskId, stage: stageId},
+                                    allPackageItems: sendAllPackageItems,
+                                }, scope.item);
                         })
                         .then((value) => {
                             notify.success(gettext('Item sent.'));
@@ -776,6 +840,9 @@ export function SendItem($q, api, desks, notify, authoringWorkspace,
              * @return {Boolean}
              */
             function isAuthoringDesk() {
+                if (!_.get(scope, 'item.task.desk')) {
+                    return false;
+                }
                 const desk = desks.getItemDesk(scope.item);
 
                 return desk && desk.desk_type === 'authoring';

@@ -1,3 +1,5 @@
+import {saveOrUpdateSavedSearch} from '../SavedSearch';
+
 SaveSearch.$inject = ['$location', 'asset', 'api', 'session', 'notify', 'gettext', '$rootScope'];
 
 /**
@@ -71,35 +73,16 @@ export function SaveSearch($location, asset, api, session, notify, gettext, $roo
                     }
                 }
 
-                var search = getFilters(_.clone($location.search()));
-
-                editSearch.filter = {query: search};
+                editSearch.filter = {query: _.clone($location.search())};
                 var originalSearch = {};
 
                 if (editSearch._id) {
                     originalSearch = scope.editingSearch;
                 }
 
-                api('saved_searches')
-                    .save(originalSearch, editSearch)
+                saveOrUpdateSavedSearch(api, originalSearch, editSearch)
                     .then(onSuccess, onFail);
             };
-
-            /**
-             * Converts the integer fields: priority and urgency to objects
-             * within a given search
-             *
-             * @return {Object} the updated search object
-             */
-            function getFilters(search) {
-                _.forOwn(search, (value, key) => {
-                    if (_.includes(['priority', 'urgency'], key)) {
-                        search[key] = JSON.parse(value);
-                    }
-                });
-
-                return search;
-            }
         },
     };
 }

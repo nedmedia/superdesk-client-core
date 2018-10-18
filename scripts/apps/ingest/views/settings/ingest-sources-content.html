@@ -17,7 +17,7 @@
                         <span translate>Last updated</span> {{ provider.last_updated | reldate }}
                     </div>
                     <div class="actions">
-                        <button ng-click="gotoIngest(provider.source)" title="{{:: 'Go to items' | translate }}"><i class="icon-external"></i></button>
+                        <button ng-click="gotoIngest(provider)" title="{{:: 'Go to items' | translate }}"><i class="icon-external"></i></button>
                         <button ng-click="edit(provider)" title="{{:: 'Edit source' | translate }}"><i class="icon-pencil"></i></button>
                         <button ng-click="remove(provider)" ng-show="!provider.last_item_update" title="{{:: 'Remove source' | translate }}"><i class="icon-trash"></i></button>
                     </div>
@@ -30,7 +30,7 @@
 <!-- Modal -->
 <div sd-modal data-model="provider" class="modal--tabs modal--large">
     <div class="modal__header"> <a href="" class="close" ng-click="cancel()"><i class="icon-close-small"></i></a>
-        <h3 class="modal__heading" ng-show="provider._id"><span translate>Edit Source</span> "{{ origProvider.name}}"</h3>
+        <h3 class="modal__heading" ng-show="provider._id"><span translate>Edit Source</span> "{{ provider.name}}"</h3>
         <h3 class="modal__heading" translate ng-hide="provider._id" translate>Add New Source</h3>
     </div>
 

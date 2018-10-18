@@ -24,9 +24,9 @@ import _ from 'lodash';
  *   A directive that generates group/section on stages of a desk or saved search.
  */
 MonitoringGroup.$inject = ['cards', 'api', 'authoringWorkspace', '$timeout', 'superdesk', 'session',
-    'activityService', 'desks', 'search', 'multi', 'archiveService', '$rootScope'];
+    'activityService', 'desks', 'search', 'multi', 'archiveService', 'config', '$rootScope'];
 export function MonitoringGroup(cards, api, authoringWorkspace, $timeout, superdesk, session, activityService,
-    desks, search, multi, archiveService, $rootScope) {
+    desks, search, multi, archiveService, config, $rootScope) {
     let ITEM_HEIGHT = 57;
     let PAGE_SIZE = 25;
     let DEFAULT_GROUP_ITEMS = 10;
@@ -206,14 +206,17 @@ export function MonitoringGroup(cards, api, authoringWorkspace, $timeout, superd
 
             // refreshes the list for matching group or view type only or if swimlane view is ON.
             scope.$on('refresh:list', (event, group) => {
-                var _viewType = event.currentScope.viewType || '';
+                const _viewType = event.currentScope.viewType || '';
+                const viewTypeMatches = [
+                    'highlights',
+                    'spiked',
+                    'single_monitoring',
+                    'monitoring',
+                    'deskOutput',
+                    'personal',
+                ].includes(_viewType);
 
-                if (group && group._id === scope.group._id || !group &&
-                        _.includes(['highlights',
-                            'spiked',
-                            'single_monitoring',
-                            'monitoring'],
-                        _viewType)) {
+                if ((group && group._id === scope.group._id) || (!group && viewTypeMatches)) {
                     scope.refreshGroup();
                 }
             });
@@ -412,6 +415,10 @@ export function MonitoringGroup(cards, api, authoringWorkspace, $timeout, superd
                 }
 
                 return apiquery(criteria, true).then((items) => {
+                    if (config.features.autorefreshContent && data != null) {
+                        data.force = true;
+                    }
+
                     if (!scope.showRefresh && data && !data.force && data.user !== session.identity._id) {
                         var itemPreviewing = isItemPreviewing();
 

@@ -11,10 +11,12 @@ VocabularyEditController.$inject = [
     'cvSchema',
 ];
 
+const idRegex = '^[a-zA-Z0-9-_]+$';
+
 export function VocabularyEditController($scope, gettext, $interpolate, notify, api, vocabularies, metadata, cvSchema) {
     var origVocabulary = _.cloneDeep($scope.vocabulary);
 
-    $scope.idRegex = '^[a-zA-Z0-9-_]+$';
+    $scope.idRegex = idRegex;
 
     function onSuccess(result) {
         notify.success(gettext('Vocabulary saved successfully'));
@@ -61,9 +63,14 @@ export function VocabularyEditController($scope, gettext, $interpolate, notify, 
         if ($scope.vocabulary._id === 'crop_sizes') {
             var activeItems = _.filter($scope.vocabulary.items, (o) => o.is_active);
 
-            _.each(_.union(_.map(activeItems, 'width'), _.map(activeItems, 'height')), (item) => {
-                if (parseInt(item, 10) < 200) {
+            activeItems.forEach(({width, height, name}) => {
+                if (parseInt(height, 10) < 200 || parseInt(width, 10) < 200) {
                     $scope.errorMessage = gettext('Minimum height and width should be greater than or equal to 200');
+                }
+
+                if (!name || name.match(idRegex) === null) {
+                    $scope.errorMessage =
+                        gettext('Name field should only have alphanumeric characters, dashes and underscores');
                 }
             });
         }
@@ -72,6 +79,16 @@ export function VocabularyEditController($scope, gettext, $interpolate, notify, 
             const uniqueField = $scope.vocabulary.unique_field || 'qcode';
 
             $scope.errorMessage = gettext('The values should be unique for ') + uniqueField;
+        }
+
+        if ($scope.vocabulary.field_type === 'media') {
+            const allowedTypes = $scope.vocabulary.field_options.allowed_types;
+
+            Object.keys(allowedTypes).forEach((key) => {
+                if (!['picture', 'video', 'audio'].includes(key)) {
+                    allowedTypes[key] = false;
+                }
+            });
         }
 
         if (_.isNil($scope.errorMessage)) {

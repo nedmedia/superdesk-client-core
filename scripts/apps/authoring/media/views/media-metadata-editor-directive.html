@@ -1,0 +1,56 @@
+<div class="form__row" ng-repeat="field in fields track by field.field">
+    <sd-line-input
+        ng-if="field.type === 'string' || (!field.type && !field.cv)"
+        ng-model="item[field.field]"
+        data-dark="dark"
+        data-boxed="boxed"
+        data-label="{{ field.label }}"
+        data-required="field.required"
+        data-disabled="isDisabled(field)"
+        data-onchange="onChange({key: field.field})"
+        data-onblur="onBlur()"
+        data-maxlength="field.maxlength"
+        data-placeholder="{{ placeholder[field.field] }}"
+        data-textarea="field.textarea"
+    />
+
+    <sd-line-input
+        ng-if="field.type === 'text'"
+        ng-model="item.extra[field.field]"
+        data-dark="dark"
+        data-boxed="boxed"
+        data-label="{{ field.label }}"
+        data-required="field.required"
+        data-disabled="isDisabled(field)"
+        data-onchange="onChange({key: 'extra'})"
+        data-onblur="onBlur()"
+        data-maxlength="field.maxlength"
+        data-placeholder="{{ placeholder[field.field] }}"
+    />
+
+    <div ng-if="field.type === 'list' || field.cv" class="sd-line-input">
+        <label>{{ field.label }}</label>
+        <div sd-meta-terms
+            class="data"
+            data-item="item"
+            data-field="{{ field.cv.schema_field || 'subject'}}"
+            data-unique="qcode"
+            data-list="field.cv.items"
+            data-cv="field.cv"
+            ng-disabled="isDisabled(field)"
+            data-header="true"
+            data-change="onChange({key: field.field})"
+            data-include-parent="{{ field.includeparent }}"
+        ></div>
+    </div>
+
+    <div ng-if="field.type === 'date'" class="sd-line-input">
+        <label>{{ field.label }}</label>
+        <div sd-datepicker
+            ng-disabled="isDisabled(field)"
+            ng-model="item.extra[field.field]"
+            data-format="YYYY-MM-DDT00:00:00+0000"
+            data-on-change="onChange({key: 'extra'})"
+        ></div>
+    </div>
+</div>

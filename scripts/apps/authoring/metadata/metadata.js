@@ -10,11 +10,7 @@ MetadataCtrl.$inject = [
 function MetadataCtrl(
     $scope, desks, metadata, privileges, datetimeHelper,
     preferencesService, config, moment, content) {
-    desks.initialize()
-        .then(() => {
-            $scope.deskLookup = desks.deskLookup;
-            $scope.userLookup = desks.userLookup;
-        });
+    desks.initialize();
 
     $scope.change_profile = config.item_profile && config.item_profile.change_profile === 1 &&
                             _.get($scope, 'origItem.type') === 'text';
@@ -663,7 +659,7 @@ function MetaTermsDirective(metadata, $filter, $timeout, preferencesService, des
                 }
 
                 scope.terms = filterSelected(scope.list);
-                if (scope.cv) { // filter out items from current cv
+                if (_.get(scope, 'cv._id')) { // filter out items from current cv
                     scope.selectedItems = selected.filter((term) => term.scheme === (scope.cv._id || scope.cv.id));
                 } else {
                     scope.selectedItems = selected.filter((term) => !term.scheme || term.scheme === scope.field);
@@ -1027,6 +1023,8 @@ function MetadataService(api, subscribersService, config, vocabularies, $rootSco
     var service = {
         values: {},
         helper_text: {},
+        popup_width: {},
+        single_value: {},
         cvs: [],
         search_cvs: config.search_cvs || [
             {id: 'subject', name: 'Subject', field: 'subject', list: 'subjectcodes'},
@@ -1050,6 +1048,12 @@ function MetadataService(api, subscribersService, config, vocabularies, $rootSco
                     self.values[vocabulary._id] = vocabulary.items;
                     if (_.has(vocabulary, 'helper_text')) {
                         self.helper_text[vocabulary._id] = vocabulary.helper_text;
+                    }
+                    if (_.has(vocabulary, 'popup_width')) {
+                        self.popup_width[vocabulary._id] = vocabulary.popup_width;
+                    }
+                    if (_.has(vocabulary, 'single_value')) {
+                        self.single_value[vocabulary._id] = vocabulary.single_value;
                     }
                 });
                 self.cvs = result;
@@ -1150,6 +1154,22 @@ function MetadataService(api, subscribersService, config, vocabularies, $rootSco
                 self.values.cities = result._items;
             });
         },
+        fetchAgendas: function() {
+            var self = this;
+
+            if ($rootScope.features.agenda) {
+                return api.get('/agenda').then((result) => {
+                    var agendas = [];
+
+                    _.each(result._items, (item) => {
+                        if (item.is_enabled) {
+                            agendas.push({name: item.name, id: item._id, qcode: item.name});
+                        }
+                    });
+                    self.values.agendas = agendas;
+                });
+            }
+        },
         filterCvs: function(qcodes, cvs) {
             var self = this;
 
@@ -1192,7 +1212,8 @@ function MetadataService(api, subscribersService, config, vocabularies, $rootSco
                     .then(angular.bind(this, this.fetchSubjectcodes))
                     .then(angular.bind(this, this.fetchAuthors))
                     .then(angular.bind(this, this.fetchSubscribers))
-                    .then(angular.bind(this, this.fetchCities));
+                    .then(angular.bind(this, this.fetchCities))
+                    .then(angular.bind(this, this.fetchAgendas));
             }
 
             return this.loaded;

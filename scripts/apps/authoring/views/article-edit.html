@@ -30,16 +30,17 @@
     <span ng-if="schema.headline.maxlength" sd-character-count data-item="item.headline" data-html="true" data-limit="schema.headline.maxlength"></span>
     <div id="title" class="headline"
          sd-editor3
-         data-editor-id="'headline'"
          data-path-to-value="'headline'"
          data-single-line="true"
          data-bind-to-value="compareView"
+         data-scroll-container=".page-content-container"
          data-language="item.language"
          data-value="item.headline"
          data-on-change="autosave(item)"
          data-read-only="!_editable"
          data-disable-spellchecker="useTansaProofing()"
          data-item="item"
+         data-refresh-trigger="refreshTrigger"
          data-tabindex="editor.headline.order">
     </div>
 </div>
@@ -89,7 +90,7 @@
          data-onchange="autosave(item)"
          data-save="save()"
          data-show-title="editor.feature_image.imageTitle"
-         tabindex="{{editor.feature_image.order}}">
+         data-tabindex="editor.feature_image.order">
     </div>
 </div>
 <div ng-if="schema.feature_media" class="field"
@@ -99,6 +100,7 @@
      data-required="schema.feature_media.required">
     <label class="field__label">{{label('feature_media')}}</label>
     <div sd-item-association
+         ng-class="{'item-association--marg-b10': editor.feature_media.showCrops}"
          data-allow-picture="true"
          data-allow-video="true"
          data-allow-audio="true"
@@ -108,7 +110,7 @@
          data-onchange="autosave(item)"
          data-save="save()"
          data-show-title="editor.feature_media.imageTitle"
-         tabindex="{{editor.feature_media.order}}">
+         data-tabindex="editor.feature_media.order">
     </div>
     <div sd-item-crops
          data-item="item.associations['featuremedia']"
@@ -154,9 +156,9 @@
     <span sd-word-count data-item="item.abstract" data-html="true"></span>
     <div id="abstract" class="abstract"
          sd-editor3
-         data-editor-id="'item-abstract'"
          data-path-to-value="'abstract'"
          data-editor-format="editor.abstract.formatOptions"
+         data-scroll-container=".page-content-container"
          data-bind-to-value="compareView"
          data-language="item.language"
          data-value="item.abstract"
@@ -164,6 +166,7 @@
          data-read-only="!_editable"
          data-disable-spellchecker="useTansaProofing()"
          data-item="item"
+         data-refresh-trigger="refreshTrigger"
          data-tabindex="editor.abstract.order">
     </div>
 </div>
@@ -295,7 +298,6 @@
     <span sd-word-count data-item="item.body_html" data-html="true"></span>
     <div id="bodyhtml"
          sd-editor3
-         data-editor-id="'item-body_html'"
          data-path-to-value="'body_html'"
          data-find-replace-target
          data-bind-to-value="compareView"
@@ -308,6 +310,7 @@
          data-language="item.language"
          data-disable-spellchecker="useTansaProofing()"
          data-item="item"
+         data-refresh-trigger="refreshTrigger"
          data-show-title="editor.body_html.imageTitle"
          data-tabindex="editor.body_html.order">
     </div>
@@ -324,22 +327,48 @@
 
     <div ng-if="item.type == 'picture' || item.type == 'graphic'" class="full-preview" sd-ratio-calc>
         <div class="media-item__item">
-            <div sd-item-rendition data-item="item" data-rendition="baseImage" ng-click="preview(item);"></div>
+            <div class="item-association item-association--preview">
+                <div class="item-association__image-container" sd-item-rendition data-item="item" data-rendition="baseImage"></div>
+
+                <div class="item-association__image-overlay" ng-if="_editable">
+                    <div class="item-association__icons-block">
+                        <a class="item-association__image-action" sd-tooltip="Edit metadata" ng-click="editMedia('view')"><i class="icon-pencil"></i></a>
+                        <a class="item-association__image-action" sd-tooltip="Edit image" ng-click="editMedia('image-edit')"><i class="icon-switches"></i></a>
+                        <a class="item-association__image-action" sd-tooltip="Edit crops" ng-click="editMedia('crop')" ng-if="metadata.crop_sizes"><i class="icon-crop"></i></a>
+                    </div>
+                </div>
+            </div>
+
             <span class="media-item__item-label" translate>Original ({{item.renditions.original.width}} x {{item.renditions.original.height}} px)</span>
+            <div sd-media-metadata-view
+                 class="media-container__metadata media-container__metadata--image"
+                 data-item="item"></div>
+
         </div>
         <div sd-item-crops data-item="item"></div>
-        <button id="btnCrop" class="btn btn--medium pull-right" ng-click="applyCrop()" ng-if="metadata.crop_sizes && _editable">
-            <span ng-if="!item.hasCrops" translate>APPLY CROPS</span>
-            <span ng-if="item.hasCrops" translate>EDIT CROPS</span>
-        </button>
     </div>
 
     <div ng-if="item.type == 'audio'">
-        <audio controls="controls" sd-sources data-renditions="item.renditions"></audio>
+        <div class="media-container">
+            <audio controls="controls" sd-sources data-renditions="item.renditions"></audio>
+            <div sd-media-metadata-view
+                 class="media-container__metadata"
+                 data-item="item"></div>
+            <div class="media-container__action-bar" ng-if="_editable">
+                <a class="btn btn--hollow btn--small" ng-click="editMedia()"><span translate>Edit metadata</span></a>
+            </div>
+        </div>
     </div>
-
     <div ng-if="item.type == 'video'">
-        <video controls="controls" sd-sources data-renditions="item.renditions"></video>
+        <div class="media-container">
+            <video controls="controls" sd-sources data-renditions="item.renditions"></video>
+            <div sd-media-metadata-view
+                 class="media-container__metadata"
+                 data-item="item"></div>
+            <div class="media-container__action-bar" ng-if="_editable">
+                <a class="btn btn--hollow btn--small" ng-click="editMedia()"><span translate>Edit metadata</span></a>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -374,9 +403,9 @@
     <span ng-if="validator.description_text.maxlength" sd-character-count data-item="item.description_text" data-html="true" data-limit="validator.description_text.maxlength"></span>
     <div id="title" class="abstract"
          sd-editor3
-         data-editor-id="'item-description_text'"
          data-path-to-value="'description_text'"
          data-editor-format="editor.description_text.formatOptions"
+         data-scroll-container=".page-content-container"
          data-bind-to-value="compareView"
          data-value="item.description_text"
          data-read-only="!_editable"
@@ -384,6 +413,7 @@
          data-language="item.language"
          data-disable-spellchecker="useTansaProofing()"
          data-item="item"
+         data-refresh-trigger="refreshTrigger"
          data-tabindex="editor.media_description.order">
     </div>
 </div>
@@ -441,16 +471,17 @@
     <label class="field__label">{{label('body_footer')}}</label>
     <div id="body_footer" class="body"
          sd-editor3
-         data-editor-id="'item-body_footer'"
          data-path-to-value="'body_footer'"
          data-bind-to-value="compareView"
          data-editor-format="editor.body_footer.formatOptions"
+         data-scroll-container=".page-content-container"
          data-value="item.body_footer"
          data-read-only="!_editable"
          data-on-change="autosave(item)"
          data-language="item.language"
          data-disable-spellchecker="useTansaProofing()"
          data-item="item"
+         data-refresh-trigger="refreshTrigger"
          data-tabindex="editor.body_footer.order">
     </div>
 </div>
@@ -527,17 +558,18 @@
     <span ng-if="schema[field._id].maxlength || schema[field._id].minlength" sd-character-count
         data-item="item.extra[field._id]" data-html="true" data-limit="schema[field._id].maxlength"></span>
     <div sd-editor3
-        data-editor-id="'extra' + FIELD_KEY_SEPARATOR + field._id"
         data-path-to-value="'extra' + FIELD_KEY_SEPARATOR + field._id"
         data-single-line="field.field_options.single"
         data-value="item.extra[field._id]"
         data-bind-to-value="compareView"
+        data-scroll-container=".page-content-container"
         data-language="item.language"
         data-on-change="autosave(item)"
         data-read-only="!_editable"
         data-disable-spellchecker="useTansaProofing()"
         data-editor-format="editor[field._id].formatOptions"
         data-item="item"
+        data-refresh-trigger="refreshTrigger"
         data-tabindex="editor[field._id].order">
     </div>
     <div class="sd-editor__info-text" ng-if="helper_text[field._id]">{{field.helper_text}}</div>
@@ -552,7 +584,7 @@
     sd-validation-error="error[field._id.toLowerCase()]">
 
     <label class="field__label">{{ field.display_name }}</label>
-    <div sd-datepicker ng-model="item.extra[field._id]" data-format="YYYY-MM-DDT00:00:00+0000" data-on-change="autosave(item)"></div>
+    <div sd-datepicker ng-disabled="!_editable" data-tabindex="editor[field._id].order" ng-model="item.extra[field._id]" data-format="YYYY-MM-DDT00:00:00+0000" data-on-change="autosave(item)"></div>
     <div class="sd-editor__info-text" ng-if="helper_text[field._id]">{{field.helper_text}}</div>
 </div>
 
@@ -564,10 +596,10 @@
     data-required="schema[field._id].required">
     <label class="field__label" translate>{{ field.display_name }}</label>
     <span>
-    <button id="clear-embed-btn" type="button" class="btn btn--small pull-right" ng-click="clearEmbed(field._id)"
+    <button ng-disabled="!_editable" id="clear-embed-btn" type="button" class="btn btn--small pull-right" ng-click="clearEmbed(field._id)"
         ng-show="item.extra[field._id].embed" translate>Clear Embed
     </button>
-    <button type="button" class="btn btn--small pull-right"
+    <button ng-disabled="!_editable" type="button" class="btn btn--small pull-right"
         ng-click="processEmbed(field._id)" ng-show="isURL(item.extra[field._id].embed)" translate>Generate From URL
     </button>
     <button id="preview-embed-btn" type="button" class="btn btn--small pull-right" ng-click="previewEmbed(field._id)"
@@ -577,22 +609,26 @@
             ng-show="isPreviewOn(field._id)" translate>Hide Preview
     </button>
     </span>
-    <textarea id="embed-field-{{ field._id }}" type="text" 
+    <textarea id="embed-field-{{ field._id }}" type="text"
         class="sd-editor__default-input sd-editor__default-input--embed"
-        ng-change="validateEmbed(field._id)" 
+        ng-change="validateEmbed(field._id)"
         ng-model="item.extra[field._id].embed"
-        sd-focus-element 
-        data-append-element=".field" 
-        data-append-class="active" 
-        sd-auto-height 
-        sd-validation-error="error.extra[field._id].embed"></textarea>
-    <input type="text" class="sd-line-input__input" style="margin-bottom: 6px;" 
-        ng-model="item.extra[field._id].description"
-        sd-remove-tags ng-change="autosave(item)" 
+        ng-disabled="!_editable"
         sd-focus-element
-        data-append-element=".field" 
-        data-append-class="active" 
-        placeholder="{{ 'Description' | translate }}">
+        data-append-element=".field"
+        data-append-class="active"
+        sd-auto-height
+        sd-validation-error="error.extra[field._id].embed"
+        tabindex="{{editor[field._id].order}}"></textarea>
+    <input type="text" class="sd-line-input__input" style="margin-bottom: 6px;"
+        ng-model="item.extra[field._id].description"
+        ng-disabled="!_editable"
+        sd-remove-tags ng-change="autosave(item)"
+        sd-focus-element
+        data-append-element=".field"
+        data-append-class="active"
+        placeholder="{{ 'Description' | translate }}"
+        tabindex="{{editor[field._id].order}}">
     <div id="embed-preview-{{ field._id }}" ng-show="embedPreviews[field._id]"></div>
     <div class="sd-editor__info-text" ng-if="helper_text[field._id]">{{field.helper_text}}</div>
 </div>
@@ -615,7 +651,7 @@
          data-allow-video="!!field.field_options.allowed_types.video"
          data-allow-audio="!!field.field_options.allowed_types.audio"
          data-max-uploads="maxUploads(field.field_options)"
-         tabindex="{{editor[field._id].order}}">
+         data-tabindex="editor[field._id].order">
     </div>
     <div class="sd-editor__info-text" ng-if="helper_text[field._id]">{{field.helper_text}}</div>
 </div>

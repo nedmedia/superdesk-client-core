@@ -20,6 +20,7 @@ export function ItemCarouselDirective($timeout) {
         scope: {
             items: '=',
             item: '=',
+            tabindex: '<',
             editable: '<',
             allowPicture: '<',
             allowVideo: '<',
@@ -91,7 +92,10 @@ export function ItemCarouselDirective($timeout) {
             /*
              * Function for triggering thumbnail navigation
              */
-            scope.goTo = (index) => carousel.trigger('to.owl.carousel', [index]);
+            scope.goTo = (index) => {
+                scope.crtIndex = index;
+                carousel.trigger('to.owl.carousel', [index]);
+            };
 
             elem.on('dragover', (event) => {
                 event.preventDefault();
@@ -178,6 +182,10 @@ export function ItemCarouselDirective($timeout) {
                         updated = true;
                     },
                 });
+
+                if (scope.crtIndex) {
+                    carousel.trigger('to.owl.carousel', [scope.crtIndex]);
+                }
             }
 
             scope.$on('$destroy', () => {

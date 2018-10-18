@@ -85,12 +85,11 @@
 
     <div class="slide-pane__footer" sd-loading="loading" ng-show="currentUserAction === vm.userActions.send_to">
         <ul class="btn-list">
-            <li class="full-width" ng-if="showSendButtonAndDestination() && !canSendItem()">
+            <li class="full-width" ng-if="showSendButtonAndDestination() && mode !== 'spike'">
                 <button class="btn btn--large btn--primary btn--hollow btn--expanded"
                         ng-click="send(true)"
-                        ng-disabled="disableFetchAndOpenButton()"
-                        translate>
-                    fetch and open
+                        ng-disabled="disableFetchAndOpenButton()">
+                    {{!canSendItem() ? 'fetch and open' : 'send and open' | translate}}
                 </button>
             </li>
             <li class="full-width" ng-if="showSendButtonAndDestination()">
@@ -99,6 +98,15 @@
                         ng-disabled="disableSendButton()"
                         >
                     {{!canSendItem() ? 'fetch' : 'send' | translate}}
+                </button>
+            </li>
+            <li class="full-width" ng-if="showSendButtonAndDestination() && isPackage">
+                <button class="btn btn--large btn--primary btn--expanded"
+                        ng-click="send(false, true)"
+                        ng-disabled="disableSendButton()"
+                        translate
+                        >
+                    send package and items
                 </button>
             </li>
         </ul>
@@ -156,6 +164,15 @@
                         ng-disabled="!canSendAndPublish()"
                         translate>
                     publish from
+                </button>
+            </li>
+            <li class="full-width" ng-if="subscribersWithPreviewConfigured.length > 0">
+                <button type="button"
+                        class="btn btn--large btn--primary btn--hollow btn--expanded"
+                        ng-click="preview()"
+                        translate
+                        >
+                    Preview
                 </button>
             </li>
             <li class="full-width" ng-if="canSendItem() && canPublishItem()">

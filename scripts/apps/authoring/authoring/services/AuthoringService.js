@@ -19,14 +19,13 @@ import * as helpers from 'apps/authoring/authoring/helpers';
  * @requires $injector
  * @requires moment
  * @requires config
- * @requires logger
  *
  * @description Authoring Service is responsible for management of the actions on a story
  */
 AuthoringService.$inject = ['$q', '$location', 'api', 'lock', 'autosave', 'confirm', 'privileges',
-    'desks', 'superdeskFlags', 'notify', 'session', '$injector', 'moment', 'config', 'logger'];
+    'desks', 'superdeskFlags', 'notify', 'session', '$injector', 'moment', 'config'];
 export function AuthoringService($q, $location, api, lock, autosave, confirm, privileges, desks, superdeskFlags,
-    notify, session, $injector, moment, config, logger) {
+    notify, session, $injector, moment, config) {
     var self = this;
 
     // TODO: have to trap desk update event for refereshing users desks.
@@ -290,10 +289,18 @@ export function AuthoringService($q, $location, api, lock, autosave, confirm, pr
             delete diff._etag;
         }
 
+        // if current document is image and it has been changed on 'media edit' we have to update the etag
+        if (origItem.type === 'picture' && item._etag != null) {
+            diff._etag = item._etag;
+        }
+
         helpers.filterDefaultValues(diff, origItem);
 
         if (_.size(diff) > 0) {
             return api.save('archive', origItem, diff).then((_item) => {
+                if (origItem.type === 'picture') {
+                    item._etag = _item._etag;
+                }
                 origItem._autosave = null;
                 origItem._autosaved = false;
                 origItem._locked = lock.isLockedInCurrentSession(item);
@@ -501,7 +508,7 @@ export function AuthoringService($q, $location, api, lock, autosave, confirm, pr
 
         action.spike = currentItem.state !== 'spiked' && userPrivileges.spike;
 
-        action.send = currentItem._current_version > 0 && userPrivileges.move;
+        action.send = currentItem._current_version > 0 && userPrivileges.move && lockedByMe;
     };
 
     this._getCurrentItem = function(item) {

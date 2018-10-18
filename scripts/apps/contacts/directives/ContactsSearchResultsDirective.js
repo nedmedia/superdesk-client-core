@@ -1,8 +1,10 @@
+import {URL_PARAMETERS} from '../constants';
+
 class LinkFunction {
     constructor(contacts, search, notify, gettext, $location, $timeout, scope, elem) {
         this.scope = scope;
         this.elem = elem;
-        this.containerElem = elem.find('.shadow-list-holder');
+        this.containerElem = elem.find('.contacts-list__holder');
         this.notify = notify;
         this.gettext = gettext;
         this.$location = $location;
@@ -22,15 +24,16 @@ class LinkFunction {
                 }
             }, true);
 
-        angular.forEach(['refresh:list', 'contacts:create'], (evt) => {
+        angular.forEach(['refresh:list'], (evt) => {
             this.scope.$on(evt, (event) => {
                 this.scope.refreshList({force: true});
             });
         });
 
         this.scope.$on('contacts:update', this.scope.refreshList);
+        this.scope.$on('contacts:create', this.scope.refreshList);
+        this.scope.urlParams = URL_PARAMETERS;
     }
-
 
     /**
      * @ngdoc method

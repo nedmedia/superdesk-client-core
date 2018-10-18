@@ -8,36 +8,13 @@
 module.exports = function(grunt) {
     return {
         defaultRoute: '/workspace',
-        validatorMediaMetadata: {
-            headline: {
-                required: true,
-            },
-            alt_text: {
-                required: true,
-            },
-            archive_description: {
-                required: false,
-            },
-            description_text: {
-                required: true,
-            },
-            copyrightholder: {
-                required: false,
-            },
-            byline: {
-                required: false,
-            },
-            usageterms: {
-                required: false,
-            },
-            copyrightnotice: {
-                required: false,
-            },
-        },
         features: {
             swimlane: {columnsLimit: 4},
             editor3: true,
             qumu: true,
+            savedSearch: {
+                subscriptions: true,
+            },
         },
         auth: {google: false},
         ingest: {

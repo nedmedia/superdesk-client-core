@@ -7,7 +7,7 @@ import {toHTML} from 'core/editor3/html';
 import ng from 'core/services/ng';
 
 import {Editor3} from '../components/Editor3';
-import {PopupTypes, forceUpdate} from '../actions';
+import {PopupTypes, forceUpdate, setAbbreviations} from '../actions';
 import {fieldsMetaKeys, setFieldMetadata, getFieldMetadata, FIELD_KEY_SEPARATOR} from '../helpers/fieldsMeta';
 import {getContentStateFromHtml} from '../html/from-html';
 import {getAnnotationsFromItem} from '../helpers/editor3CustomData';
@@ -22,6 +22,8 @@ export const ignoreInternalAnnotationFields = (annotations) =>
     annotations.map(
         (annotation) => pick(annotation, ['id', 'type', 'body'])
     );
+
+export const isEditorPlainText = (props) => props.singleLine || (props.editorFormat || []).length === 0;
 
 /**
  * @name createEditorStore
@@ -41,7 +43,8 @@ export default function createEditorStore(props, isReact = false) {
     const content = getInitialContent(props);
 
     const decorators = Editor3.getDecorator(props.disableSpellchecker || !spellcheck.isAutoSpellchecker);
-    const showToolbar = !props.singleLine && (props.editorFormat || []).length > 0;
+    const showToolbar = !isEditorPlainText(props);
+
     const onChangeValue = isReact ? props.onChange : _.debounce(onChange.bind(props), props.debounce);
 
     const store = createStore(reducers, {
@@ -62,11 +65,16 @@ export default function createEditorStore(props, isReact = false) {
         suggestingMode: false,
         invisibles: false,
         svc: props.svc,
+        abbreviations: {},
     }, applyMiddleware(thunk));
 
 
     // after we have the dictionary, force update the editor to highlight typos
     dict.finally(() => store.dispatch(forceUpdate()));
+
+    spellcheck.getAbbreviationsDict().then((abbreviations) => {
+        store.dispatch(setAbbreviations(abbreviations || {}));
+    });
 
     return store;
 }
@@ -76,20 +84,21 @@ export default function createEditorStore(props, isReact = false) {
  *
  * @param {Object} item
  */
-function generateAnnotations(item, logger) {
+function generateAnnotations(item) {
     item.annotations = ignoreInternalAnnotationFields(
-        getAnnotationsFromItem(item, 'body_html', logger)
+        getAnnotationsFromItem(item, 'body_html')
     );
 }
 
 /**
  * @name onChange
  * @params {ContentState} contentState New editor content state.
+ * @params {Boolean} plainText If this is true, the editor content will be text instead of html
  * @description Triggered whenever the state of the editor changes. It takes the
  * current content states and updates the values of the host controller. This function
  * is bound to the controller, so 'this' points to controller attributes.
  */
-export function onChange(contentState) {
+export function onChange(contentState, {plainText = false} = {}) {
     const pathToValue = this.pathToValue;
 
     if (pathToValue == null || pathToValue.length < 1) {
@@ -122,11 +131,13 @@ export function onChange(contentState) {
         }, this.item);
 
     const fieldName = pathToValueArray[pathToValueArray.length - 1];
-    const logger = ng.get('logger');
 
-    objectToUpdate[fieldName] = toHTML(contentStateHighlightsReadyForExport, logger);
-
-    generateAnnotations(this.item, logger);
+    if (plainText) {
+        objectToUpdate[fieldName] = contentStateHighlightsReadyForExport.getPlainText();
+    } else {
+        objectToUpdate[fieldName] = toHTML(contentStateHighlightsReadyForExport);
+        generateAnnotations(this.item);
+    }
 
     // call on change with scope updated
     this.$rootScope.$applyAsync(() => {
@@ -142,7 +153,7 @@ export function onChange(contentState) {
  * If an editor state is available as saved in the DB, we use that, otherwise we attempt to
  * use available HTML. If none are available, an empty ContentState is created.
  */
-function getInitialContent(props) {
+export function getInitialContent(props) {
     // support standalone instance of editor3 which is not connected to item field
     if (props.editorState != null) {
         var contentState = convertFromRaw(

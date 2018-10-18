@@ -1,4 +1,6 @@
-const DEFAULT_PAGE_SIZE = 25;
+import {FILTER_FIELDS, URL_PARAMETERS} from '../constants';
+
+const DEFAULT_PAGE_SIZE = 50;
 
 /**
  * @ngdoc service
@@ -28,6 +30,16 @@ export class ContactsService {
         this.save = this.save.bind(this);
 
         this.twitterPattern = /^@([A-Za-z0-9_]{1,15}$)/;
+        this.privacyOptions = [
+            {name: gettext('All'), value: null},
+            {name: gettext('Public'), value: 'true'},
+            {name: gettext('Private'), value: 'false'},
+        ];
+        this.statusOptions = [
+            {name: gettext('All'), value: null},
+            {name: gettext('Active'), value: 'true'},
+            {name: gettext('Inactive'), value: 'false'},
+        ];
     }
 
     /**
@@ -42,15 +54,36 @@ export class ContactsService {
         let criteria = {};
         let params = param || this.$location.search();
         let sort = this.sort.getSort(this.sortOptions);
+        let filters = [];
 
         criteria.max_results = DEFAULT_PAGE_SIZE;
         criteria.sort = this.sort.formatSort(sort.field, sort.dir);
         criteria.page = 1;
-        criteria.all = true;
+        criteria.all = false; // to get all contacts
 
-        if (params.q) {
-            criteria.q = params.q;
+        let queryParams = params.q ? [params.q] : [];
+
+        angular.forEach(URL_PARAMETERS, (val, key) => {
+            if (params[key]) {
+                queryParams.push(`${key}:(${params[key]})`);
+            }
+        });
+
+        if (queryParams.length) {
+            criteria.q = queryParams.join(' ');
             criteria.default_operator = 'AND';
+        }
+
+        Object.keys(FILTER_FIELDS).forEach((key) => {
+            let paramName = FILTER_FIELDS[key];
+
+            if (angular.isDefined(params[paramName])) {
+                filters.push({term: {[paramName]: params[paramName]}});
+            }
+        });
+
+        if (filters.length) {
+            criteria.filter = JSON.stringify({and: filters});
         }
 
         return criteria;

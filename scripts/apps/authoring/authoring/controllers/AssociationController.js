@@ -164,13 +164,13 @@ export function AssociationController(config, send, api, $q, superdesk,
      * @param {String} customRel association identifier
      * @param {Function} callback to call after save
      */
-    this.updateItemAssociation = function(scope, updated, customRel, callback = null) {
+    this.updateItemAssociation = function(scope, updated, customRel, callback = null, autosave = false) {
         let data = {}, rel = customRel || scope.rel;
 
         data[rel] = updated;
         scope.item.associations = angular.extend({}, scope.item.associations, data);
         scope.rel = rel;
-        if (!authoring.isPublished(scope.item) && updated) {
+        if (!authoring.isPublished(scope.item) && updated && !autosave) {
             var promise = scope.save();
 
             if (callback) {
@@ -179,7 +179,7 @@ export function AssociationController(config, send, api, $q, superdesk,
             return promise;
         }
 
-        scope.onchange({item: scope.item, data: data});
+        scope._onchange({item: scope.item, data: data});
     };
 
     /**
@@ -197,15 +197,18 @@ export function AssociationController(config, send, api, $q, superdesk,
             return;
         }
 
+        const isImage = self.isImage(item.renditions.original);
+        const defaultTab = isImage ? 'crop' : 'view';
+
         const cropOptions = {
             isNew: 'isNew' in options ? options.isNew : false,
-            editable: scope.editable,
+            editable: !!scope.editable,
             isAssociated: true,
-            defaultTab: 'crop',
-            showMetadata: true,
+            defaultTab: 'defaultTab' in options ? options.defaultTab : defaultTab,
+            showMetadata: 'showMetadata' in options ? options.showMetadata : true,
         };
 
-        if (item.renditions && item.renditions.original && self.isImage(item.renditions.original)) {
+        if (item.renditions && item.renditions.original) {
             scope.loading = true;
             return renditions.crop(item, cropOptions)
                 .then((rendition) => {
@@ -247,16 +250,20 @@ export function AssociationController(config, send, api, $q, superdesk,
                 return;
             }
 
-            if (self.isMediaEditable()) {
+            // save generated association id in order to be able to update the same item after editing.
+            const originalRel = scope.rel;
+
+            if (self.isMediaEditable() && _.get(item, '_type') === 'externalsource') {
+                // if media is editable then association will be updated by self.edit method
                 scope.loading = true;
                 renditions.ingest(item)
-                    .then((item) => self.edit(scope, item))
+                    .then((item) => self.edit(scope, item, {customRel: originalRel}))
                     .finally(() => {
                         scope.loading = false;
                     });
             } else {
-                // update association in an item even if editing of metadata and crop not allowed.
-                self.updateItemAssociation(scope, item);
+                // Update the association is media is not editable.
+                self.updateItemAssociation(scope, item, null, null, true);
             }
         });
     };

@@ -1,5 +1,157 @@
 # Superdesk Client Changelog
 
+## [1.25.0] 2018-09-20
+
+### Fixed
+
+- Fix fetching media from external source on drop to featured media.
+- Date fields are not working in search.
+- Add all 3 edit options for single image items.
+- Fix ingest config bug for ftp move folder.
+- Add feature flags to display editor widgets for attachments, inline comments and suggestions.
+- Fix striping html tags when pasting content in image caption field.
+- Only allow photogrid and compact views in media contacts.
+- Fix pasting to editor when it's not html.
+- Modified styles in editor so that body html and headline renders same in view and edit mode.
+- Use editor3 internal clipboard to copy entities from open editors.
+- Add validation to Image Crop sizes CV names.
+- Fix typos in image editor.
+- Fix error when users are unable to see selected categories in authoring.
+- Fix error when go to items is called for second ingest source.
+- Fix media metadata save issue and display fields based on validator config.
+- Fix issue when send to panel is displaying fetch actions.
+- Update etag of image item after updating crops.
+- Place single or multi value dropdown based on the vocabulary settings.
+- Enable all repos if no repos are selected in search panel.
+- Some of ingest channel details are missing if opened from ingest dashboard.
+- Fix searching for media contacts.
+- Duplicate description field is presented when uploading a media to authoring item.
+- Hide edit/crop tabs when editing video/audio items.
+- After image editing don't reset current image in carousel.
+
+### Added
+
+- Managing of saved searches for other users.
+- Allow moving package with all its items.
+- Add config option for spike confirmations.
+- Add support for abbreviations in editor3.
+- Open or close preview header based on local storage settings.
+- Add saved search subscriptions.
+- Show product id when product is edited.
+- Add content type filter to publish queue view.
+- Typescript integration.
+
+### Changed
+
+- Improve rotate function in image editor.
+- Allow custom fields and sorting in `sd-search-results` directive.
+- Refresh button improvements in monitoring.
+- Add empty block on pasting to editor3 only at the bottom.
+
+## [1.24.0] 2018-08-20
+
+### Fixed
+
+- Update `item.associations` on save action.
+- In custom text fields table controls are not visible when scrolled down.
+- Wrong html output when saving story with inline styles.
+- Fix issue with changing workspace flag.
+- After media edit update etag for media items.
+- Move block to drop area after dragging new image to body.
+- Prevent dragging media around body when item is locked.
+- Adding subnav for privacy and status filters.
+- Search criteria set to last month for publish date is yielding improper results.
+- Unordered list appears as plain list in the preview.
+- Remove update button from edit/correct.
+- After selecting text and adding comment/annotation the cursor jumps to the beginning of input field.
+
+### Added
+
+- Use can set default planning agenda if planning is enabled.
+- Add functionality to edit metadata for single files.
+
+### Changed
+
+- Retrieve validator media metadata from backend.
+
+## [1.23.0] 2018-08-07
+
+### Fixed
+
+- Dragging an item to custom media field with multiple items enabled adds the item twice.
+- Cannot edit links or attachments.
+- Description line for custom vocabulary has drifted from the parent control in authoring UI.
+- Fix required config on subject field in content profile editor.
+- After embed editing move the cursor right before the edited embed.
+- Strip html tags from headline.
+- Add close button to 3 dots menu in sidebar preview.
+- After clear format action set the cursor after the selected text.
+- Improve single media items display.
+- UI problems on add to dictionary dialog when select all is applied to the text.
+- Dashboard widget modal UI improvements.
+- Improvements and bug fixes for multi metadata editor.
+- Tab sequence is broken in authoring ignoring the order from content profile.
+- Fix required highlight for custom fields.
+- Disable recovery of deletes characters when the same characters are added.
+- Fix events preview for event type ingest sources.
+- After pressing submit or cancel when editing embed code focus jumps to the beginning of the body.
+- Hide media blocks in preview when hide images is on.
+- Restrict popup width field to categories and cvs.
+- Unable to move images within the body.
+- Add missing data to suggestion history.
+- Fix console error in `password-strength` directive.
+- Audio and video title is displayed twice if show title is set in content profile.
+- Activate metadata editing only for media files.
+- Display field names instead of ids in filter conditions editor.
+- Activate save button after an image is dragged on feature media field.
+
+### Added
+
+- Show custom text and custom date fields in sidebar preview.
+- Support for publish date filtering in search.
+- Add Preview API support.
+- Added aspect ratio buttons to media fields.
+
+### Changed
+
+- Use semver for superdesk ui framework.
+- Modified `extensionpoint` directive to call a callback.
+
+## [1.22.0] 2018-07-17
+
+### Fixed
+
+- Fix cursor reset when an embed is edited.
+- Disable media editing when item is locked.
+- Fix drop event not handling regular files on editor3.
+- Disable send to menu action when item is locked.
+- Reduce line spacing before h5 in editor3.
+- Fix `popup_width` handling in metadata.
+- Fix `isLinkExternal` with data protocol.
+- Preserve highlights on spellchecker changes.
+- Fix user avatar modal.
+- Fix adding insert suggestion on superscript text.
+- Fix macros listing on desk creation.
+- Apply Tansa spellchecker on media description.
+- Remove local path from ftp destination config.
+- Hamburger menu is not translated after changing the language.
+
+### Added
+
+- Add support for password expiry after given period.
+- Add fields for copyright and usageterms to lists.
+- Support inline styles on tables.
+- Allow editing of video metadata.
+- Add confirmation when closing media editing with unsaved changes.
+- Check if template is set as default before removing it.
+- Specify qcode type in vocabulary schema.
+- Add preview endpoint URL to subscriber configuration.
+- Add RTL languages support to the editor.
+
+### Changed
+
+- Make grid item content fully configurable.
+
 ## [1.21.0] 2018-06-25
 
 ### Fixed

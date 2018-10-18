@@ -34,6 +34,7 @@ import postscribe from 'postscribe';
  * @requires metadata
  * @requires suggest
  * @requires config
+ * @requires deployConfig
  * @requires editorResolver
  * @requires $sce
  * @requires mediaIdGenerator
@@ -69,18 +70,18 @@ AuthoringDirective.$inject = [
     'metadata',
     'suggest',
     'config',
+    'deployConfig',
     'editorResolver',
     'compareVersions',
     'embedService',
     '$sce',
     'mediaIdGenerator',
-    'logger',
 ];
 export function AuthoringDirective(superdesk, superdeskFlags, authoringWorkspace, notify,
     gettext, desks, authoring, api, session, lock, privileges, content, $location,
     referrer, macros, $timeout, $q, modal, archiveService, confirm, reloadService,
-    $rootScope, $interpolate, metadata, suggest, config, editorResolver, compareVersions,
-    embedService, $sce, mediaIdGenerator, logger) {
+    $rootScope, $interpolate, metadata, suggest, config, deployConfig, editorResolver,
+    compareVersions, embedService, $sce, mediaIdGenerator) {
     return {
         link: function($scope, elem, attrs) {
             var _closing;
@@ -104,6 +105,8 @@ export function AuthoringDirective(superdesk, superdeskFlags, authoringWorkspace
             $scope.isValidEmbed = {};
             $scope.embedPreviews = {};
             $scope.mediaFieldVersions = {};
+            $scope.refreshTrigger = 0;
+            $scope.isPreview = false;
 
             $scope.$watch('origItem', (newValue, oldValue) => {
                 $scope.itemActions = null;
@@ -207,6 +210,11 @@ export function AuthoringDirective(superdesk, superdeskFlags, authoringWorkspace
 
                     if (res.highlight) {
                         _previewHighlight(res._id);
+                    }
+
+                    // clonedeep associations so that diff can be calculated for saving next time.
+                    if (res.associations && !_.isEqual($scope.item.associations, res.associations)) {
+                        $scope.item.associations = _.cloneDeep(res.associations);
                     }
 
                     notify.success(gettext('Item updated.'));
@@ -487,7 +495,7 @@ export function AuthoringDirective(superdesk, superdeskFlags, authoringWorkspace
             }
 
             function validateForPublish(item) {
-                var validator = $rootScope.config.validatorMediaMetadata;
+                var validator = deployConfig.getSync('validator_media_metadata');
 
                 if (item.type === 'picture' || item.type === 'graphic') {
                     // required media metadata fields are defined in superdesk.config.js
@@ -713,6 +721,8 @@ export function AuthoringDirective(superdesk, superdeskFlags, authoringWorkspace
              */
             $scope.preview = function(version) {
                 helpers.forcedExtend($scope.item, version);
+                $scope.refreshTrigger++;
+                $scope.isPreview = true;
                 $scope._editable = false;
             };
 
@@ -720,7 +730,12 @@ export function AuthoringDirective(superdesk, superdeskFlags, authoringWorkspace
              * Revert item to given version
              */
             $scope.revert = function(version) {
+                $scope.isPreview = false;
                 helpers.forcedExtend($scope.item, version);
+                $scope.refreshTrigger++;
+                if ($scope.item.annotations == null) {
+                    $scope.item.annotations = [];
+                }
                 return $scope.save();
             };
 
@@ -730,6 +745,11 @@ export function AuthoringDirective(superdesk, superdeskFlags, authoringWorkspace
             $scope.closePreview = function() {
                 $scope.item = _.create($scope.origItem);
                 $scope._editable = $scope.action !== 'view' && authoring.isEditable($scope.origItem);
+
+                if ($scope.isPreview) {
+                    $scope.isPreview = false;
+                    $scope.refreshTrigger++;
+                }
 
                 // populate content fields so that it can undo to initial (empty) version later
                 var autosave = $scope.origItem._autosave || {};

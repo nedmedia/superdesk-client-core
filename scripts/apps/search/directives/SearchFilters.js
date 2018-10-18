@@ -1,7 +1,8 @@
 import _ from 'lodash';
+import {getDateFilters} from './DateFilters';
 
 class LinkFunction {
-    constructor(desks, tags, $location, scope, elem, metadata) {
+    constructor(desks, tags, $location, scope, elem, metadata, gettext) {
         this.scope = scope;
         this.elem = elem;
         this.tags = tags;
@@ -13,6 +14,10 @@ class LinkFunction {
         this.scope.removeFilter = this.removeFilter.bind(this);
         this.scope.setFilter = this.setFilter.bind(this);
         this.scope.isEmpty = this.isEmpty.bind(this);
+        this.scope.dateFilters = getDateFilters(gettext);
+        this.scope.clearPredefinedFilters = this.clearPredefinedFilters.bind(this);
+        this.scope.togglePredefinedDateFilter = this.togglePredefinedDateFilter.bind(this);
+        this.scope.hasPredefinedDateFilter = this.hasPredefinedDateFilter.bind(this);
         this.aggregationsMapper = {
             genre: this._categoryMapper.bind(this),
             category: this._categoryMapper.bind(this),
@@ -33,6 +38,26 @@ class LinkFunction {
                     });
                 }
             });
+    }
+
+    hasPredefinedDateFilter(fieldname, filterValue) {
+        return this.$location.search()[fieldname] === filterValue;
+    }
+
+    clearPredefinedFilters(fieldname) {
+        this.$location.search(fieldname, null);
+    }
+
+    togglePredefinedDateFilter(fieldname, filterValue) {
+        // clear exact range filters
+        this.$location.search(fieldname + 'from', null);
+        this.$location.search(fieldname + 'to', null);
+
+        if (this.hasPredefinedDateFilter(fieldname, filterValue)) {
+            this.clearPredefinedFilters(fieldname);
+        } else {
+            this.$location.search(fieldname, filterValue);
+        }
     }
 
 
@@ -167,7 +192,6 @@ class LinkFunction {
         this.scope.aggregations = {
             type: {},
             desk: {},
-            date: {},
             source: {},
             credit: {},
             category: {},
@@ -186,12 +210,11 @@ class LinkFunction {
      * @name sdSearchFilters#toggleFilter
      * @param {String} type - facet type
      * @param {String} key - facet value
+     * @param {String?} fieldname
      */
     toggleFilter(type, key) {
         if (this.hasFilter(type, key)) {
             this.removeFilter(type, key);
-        } else if (type === 'date') {
-            this.setDateFilter(key);
         } else {
             this.setFilter(type, key);
         }
@@ -273,43 +296,6 @@ class LinkFunction {
 
     /**
      * @ngdoc method
-     * @name sdSearchFilters#setDateFilter
-     * @public
-     * @description Set location url for date filters
-     * @param {string} key Date key
-     */
-    setDateFilter(key) {
-        // Clean other date filters
-        this.$location.search('afterfirstcreated', null);
-        this.$location.search('beforefirstcreated', null);
-        this.$location.search('afterversioncreated', null);
-        this.$location.search('beforeversioncreated', null);
-
-        switch (key) {
-        case 'Last Day':
-            this.$location.search('after', 'now-24H');
-            break;
-        case 'Last Week':
-            this.$location.search('after', 'now-1w');
-            break;
-        case 'Last Month':
-            this.$location.search('after', 'now-1M');
-            break;
-        case 'Scheduled Last Day':
-            this.$location.search('scheduled_after', 'now-24H');
-            break;
-        case 'Scheduled Last 8Hrs':
-            this.$location.search('scheduled_after', 'now-8H');
-            break;
-
-        default:
-            this.$location.search('after', null);
-            this.$location.search('scheduled_after', null);
-        }
-    }
-
-    /**
-     * @ngdoc method
      * @name sdSearchFilters#isEmpty
      * @public
      * @description check if aggregations are returned in the response
@@ -362,11 +348,11 @@ class LinkFunction {
  * @description sd-search-filters handles filtering using aggregates in the
  * left hand side panel of Global search page, archive search page and content api search.
  */
-export function SearchFilters(desks, tags, $location, metadata) {
+export function SearchFilters(desks, tags, $location, metadata, gettext) {
     return {
         template: require('scripts/apps/search/views/search-filters.html'),
-        link: (scope, elem) => new LinkFunction(desks, tags, $location, scope, elem, metadata),
+        link: (scope, elem) => new LinkFunction(desks, tags, $location, scope, elem, metadata, gettext),
     };
 }
 
-SearchFilters.$inject = ['desks', 'tags', '$location', 'metadata'];
+SearchFilters.$inject = ['desks', 'tags', '$location', 'metadata', 'gettext'];

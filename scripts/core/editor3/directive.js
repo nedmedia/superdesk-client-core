@@ -5,6 +5,7 @@ import {EditorState} from 'draft-js';
 
 import {Editor3} from './components';
 import createEditorStore from './store';
+import {getInitialContent} from './store';
 import {getContentStateFromHtml} from './html/from-html';
 
 import {changeEditorState, setReadOnly} from './actions';
@@ -30,7 +31,6 @@ class Editor3Directive {
         this.controller = ['config', '$element', 'editor3', '$scope', '$rootScope', 'gettextCatalog', this.initialize];
 
         this.bindToController = {
-            editorId: '=',
             /**
              * @type {String}
              * @description If set, it will be used to make sure the toolbar is always
@@ -87,6 +87,12 @@ class Editor3Directive {
              * in compare versions.
              */
             bindToValue: '=?',
+
+            /**
+             * @type {Number}
+             * @description If changed the editor will reload the editor state from item.
+             */
+            refreshTrigger: '=?',
 
             /**
              * @type {Function}
@@ -173,6 +179,23 @@ class Editor3Directive {
             store.dispatch(changeEditorState(editorState));
         });
 
+        // bind the directive refreshTrigger attribute bi-directionally between Angular and Redux.
+        $scope.$watch('vm.refreshTrigger', (val, old) => {
+            if (val === 0) {
+                return;
+            }
+
+            const props = {
+                item: this.item,
+                pathToValue: this.pathToValue,
+            };
+            const content = getInitialContent(props);
+            const state = store.getState();
+            const editorState = EditorState.push(state.editorState, content, 'change-block-data');
+
+            store.dispatch(changeEditorState(editorState, true, true));
+        });
+
         // bind the directive readOnly attribute bi-directionally between Angular and Redux.
         $scope.$watch('vm.readOnly', (val, old) => {
             if (val !== old) {
@@ -197,7 +220,6 @@ class Editor3Directive {
                 ReactDOM.render(
                     <Provider store={store}>
                         <Editor3
-                            id={this.editorId}
                             scrollContainer={this.scrollContainer}
                             singleLine={this.singleLine} />
                     </Provider>, $element.get(0)

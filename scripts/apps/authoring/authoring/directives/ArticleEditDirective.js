@@ -13,6 +13,7 @@ import {getLabelNameResolver} from 'apps/workspace/helpers/getLabelForFieldId';
  * @requires superdesk
  * @requires content
  * @requires config
+ * @requires deployConfig
  * @requires session
  * @requires gettext
  * @requires history
@@ -33,6 +34,7 @@ ArticleEditDirective.$inject = [
     'superdesk',
     'content',
     'config',
+    'deployConfig',
     'session',
     'gettext',
     'history',
@@ -48,6 +50,7 @@ export function ArticleEditDirective(
     superdesk,
     content,
     config,
+    deployConfig,
     session,
     gettext,
     history,
@@ -65,7 +68,7 @@ export function ArticleEditDirective(
                 scope.canListEditSignOff = config.user && config.user.sign_off_mapping;
                 scope.editSignOff = false;
                 scope.mediaLoading = false;
-                scope.validator = config.validatorMediaMetadata;
+                scope.validator = deployConfig.getSync('validator_media_metadata');
                 scope.features = config.features;
 
                 var mainEditScope = scope.$parent.$parent;
@@ -129,11 +132,6 @@ export function ArticleEditDirective(
                         }
                         if (autopopulateByline && !item.byline) {
                             item.byline = session.identity.byline;
-                        }
-                        if (_.includes(['picture', 'graphic'], item.type) && _.get(metadata, 'values.crop_sizes')) {
-                            item.hasCrops = metadata.values.crop_sizes.some(
-                                (crop) => item.renditions && item.renditions[crop.name]
-                            );
                         }
                     }
                 });
@@ -274,19 +272,26 @@ export function ArticleEditDirective(
 
                 /**
                  * @ngdoc method
-                 * @name sdArticleEdit#applycrop
+                 * @name sdArticleEdit#editMedia
                  *
-                 * @description Opens the Change Image Controller to modify the image metadata and crops.
+                 * @description Opens the Change Image Controller to modify the image metadata.
                  */
-                scope.applyCrop = function() {
+                scope.editMedia = (defaultTab = 'view', hideTabs = []) => {
                     scope.mediaLoading = true;
-                    return renditions.crop(scope.item,
-                        {isNew: false, editable: true, isAssociated: false, defaultTab: 'crop', showMetadata: true})
+
+                    return renditions.crop(
+                        scope.item,
+                        {
+                            isNew: false,
+                            editable: true,
+                            isAssociated: false,
+                            defaultTab: defaultTab,
+                            hideTabs: scope.metadata && scope.metadata.crop_sizes ? [] : ['crop'],
+                            showMetadata: true,
+                        }
+                    )
                         .then((picture) => {
-                            // update _etag code if it is changes by media_edit in meanwhile
-                            if (scope.item._etag !== scope.origItem._etag) {
-                                scope.origItem._etag = scope.item._etag;
-                            }
+                            scope.item._etag = picture._etag;
 
                             if (authoring.isPublished(scope.item)) {
                                 mainEditScope.dirty = true;
@@ -302,6 +307,16 @@ export function ArticleEditDirective(
                         .finally(() => {
                             scope.mediaLoading = false;
                         });
+                };
+
+                /**
+                 * @ngdoc method
+                 * @name sdArticleEdit#applycrop
+                 *
+                 * @description Opens the Change Image Controller to modify the image metadata and crops.
+                 */
+                scope.applyCrop = function() {
+                    return this.editMedia('crop');
                 };
 
                 /**

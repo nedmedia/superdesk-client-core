@@ -1,7 +1,7 @@
 <div>
     <div class="content-container">
 
-      <header class="preview-header" ng-class="{active: toggleHeader}">
+      <header class="preview-header" ng-class="{active: previewState.toggleHeader}">
         <div class="preview-header__timestamp" title="{{userLookup[selected.preview.original_creator].display_name || selected.preview.original_creator}}">
             <label translate>Created</label><time sd-datetime data-date="selected.preview.firstcreated"></time>
             <label ng-if="selected.preview.original_creator" translate>by</label><b>{{userLookup[selected.preview.original_creator].display_name || selected.preview.original_creator}}</b>
@@ -60,7 +60,11 @@
           </div>
         </div>
 
-        <button class="preview-header__toggle" ng-class="{active: toggleHeader}" ng-click="toggleHeader = !toggleHeader" tabindex="-1"><i class="icon-chevron-down-thin"></i></button>
+        <button
+                class="preview-header__toggle"
+                ng-class="{active: previewState.toggleHeader}"
+                ng-click="togglePreviewHeader()"
+                tabindex="-1"><i class="icon-chevron-down-thin"></i></button>
       </header>
 
         <div class="composite-nav" ng-if="selected.preview.type === 'composite'">
@@ -125,6 +129,13 @@
             <div class="text body-footer" ng-show="selected.preview.body_footer" sd-html-preview="selected.preview.body_footer" item="selected.preview"></div>
 
             <div class="text sign-off" ng-show="selected.preview.sign_off" sd-html-preview="selected.preview.sign_off"></div>
+
+            <!-- custom date and text fields -->
+            <div ng-repeat="field in fields track by field._id" order="{{editor[field._id].order}}"
+              ng-if="selected.preview.extra[field._id] && (field.field_type === 'text' || field.field_type === 'date')">
+              <div class="text body-text" sd-short-date ng-if="field.field_type === 'date'" data-date="selected.preview.extra[field._id]"></div>
+              <div class="text body-text" ng-if="field.field_type === 'text'" sd-html-preview="selected.preview.extra[field._id]"></div>
+            </div>
 
             <div class="composite-preview" ng-if="selected.preview.type === 'composite'">
                 <div sd-package data-item="selected.preview" data-setitem="openSingleItem(selected)"></div>
